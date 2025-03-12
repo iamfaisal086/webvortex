@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Blog</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; transition: all 0.3s ease; }
+        body { display: flex; flex-direction: column; min-height: 100vh; background: #f4f4f4; color: #333; }
+        header { background: #2c3e50; color: white; padding: 15px; text-align: center; font-size: 24px; position: relative; }
+        .sidebar { width: 250px; background: #34495e; color: white; padding: 15px; position: fixed; left: -250px; top: 0; height: 100%; transition: left 0.3s ease-in-out; }
+        .sidebar ul { list-style: none; margin-top: 20px; }
+        .sidebar ul li { padding: 10px; cursor: pointer; border-bottom: 1px solid rgba(255, 255, 255, 0.2); }
+        .sidebar ul li:hover { background: #1abc9c; }
+        .menu-btn, .dark-mode-btn { position: absolute; top: 15px; background: none; border: none; color: white; font-size: 18px; cursor: pointer; }
+        .menu-btn { left: 15px; font-size: 24px; }
+        .dark-mode-btn { right: 15px; }
+        .container { margin: 20px auto; padding: 20px; max-width: 900px; background: white; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+        .blog-post { margin-bottom: 20px; padding: 15px; border-bottom: 1px solid #ddd; }
+        .blog-content { display: none; margin-top: 10px; }
+        .btn { background: #1abc9c; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 5px; margin-top: 10px; }
+        .btn:hover { background: #16a085; }
+        .footer { background: #2c3e50; color: white; text-align: center; padding: 10px; margin-top: auto; }
+        #progress-bar { position: fixed; top: 0; left: 0; height: 5px; width: 0%; background: #1abc9c; z-index: 1000; }
+    </style>
+</head>
+<body>
+
+<!-- Reading Progress Bar -->
+<div id="progress-bar"></div>
+
+<header>
+    <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+    My Awesome Blog
+    <button class="dark-mode-btn" onclick="toggleDarkMode()">🌙</button>
+</header>
+
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+    <ul>
+        <li onclick="closeSidebar()">Close ✖</li>
+        <li>Home</li>
+        <li>About</li>
+        <li>Contact</li>
+    </ul>
+</div>
+
+<!-- Blog Container -->
+<div class="container" id="blog-container"></div>
+
+<footer class="footer">© 2025 My Blog | All Rights Reserved</footer>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        fetch("blogs.json")
+            .then(response => response.json())
+            .then(blogs => {
+                let blogContainer = document.getElementById("blog-container");
+
+                for (let key in blogs) {
+                    let blog = blogs[key];
+
+                    let blogPost = document.createElement("div");
+                    blogPost.classList.add("blog-post");
+                    blogPost.innerHTML = `
+                        <h2>${blog.title}</h2>
+                        <p><strong>Date:</strong> ${blog.date}</p>
+                        <div class="blog-content">${blog.content}</div>
+                        <button class="btn" onclick="toggleContent(this)">Read More</button>
+                    `;
+                    blogContainer.appendChild(blogPost);
+                }
+            })
+            .catch(error => console.error("Error loading blogs:", error));
+    });
+
+    function toggleSidebar() {
+        let sidebar = document.getElementById("sidebar");
+        sidebar.style.left = sidebar.style.left === "0px" ? "-250px" : "0px";
+    }
+
+    function closeSidebar() {
+        document.getElementById("sidebar").style.left = "-250px";
+    }
+
+    function toggleDarkMode() {
+        document.body.classList.toggle("dark-mode");
+    }
+
+    function toggleContent(button) {
+        let content = button.previousElementSibling;
+        if (content.style.display === "none" || content.style.display === "") {
+            content.style.display = "block";
+            button.innerText = "Read Less";
+        } else {
+            content.style.display = "none";
+            button.innerText = "Read More";
+        }
+    }
+
+    function updateProgressBar() {
+        let scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        let scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        let progress = (scrollTop / scrollHeight) * 100;
+        document.getElementById("progress-bar").style.width = progress + "%";
+    }
+
+    window.onscroll = updateProgressBar;
+</script>
+
+</body>
+</html>

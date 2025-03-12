@@ -1,0 +1,27 @@
+{
+    "blog1": {
+        "title": "Mera Pehla Blog",
+        "date": "2025-03-12",
+        "content": "Yeh mera pehla blog hai jo meri existing site me add ho raha hai."
+    },
+    "blog2": {
+        "title": "Dusra Blog",
+        "date": "2025-03-11",
+        "content": "Yeh dusra blog hai jo mai bina alag HTML page ke show kar raha hoon."
+    },
+    "blog3": {
+        "title": "Teesra Blog",
+        "date": "2025-03-13",
+        "content": "Yeh teesra blog hai jo mai bina naye HTML pages ke dynamically dikhane wala hoon."
+    },
+    "blog4": {
+        "title": "Chautha Blog",
+        "date": "2025-03-14",
+        "content": "Is blog me mai apni site ke naye features ke baare me bata raha hoon."
+    },
+    "blog5": {
+        "title": "Panchva Blog",
+        "date": "2025-03-15",
+        "content": "Yeh blog sirf testing ke liye hai, jo JSON se dynamically load ho raha hai."
+    }
+}

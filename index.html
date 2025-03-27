@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔒 Bhai ka Secure Swag</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SweetAlert2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- SHA-256 Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+            min-height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            overflow-x: hidden;
+        }
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 10;
+        }
+        .sidebar {
+            position: fixed;
+            top: 80px;
+            left: -250px;
+            width: 250px;
+            height: calc(100% - 120px);
+            background: rgba(255, 255, 255, 0.95);
+            transition: left 0.3s ease-in-out;
+            z-index: 20;
+        }
+        .sidebar.open {
+            left: 0;
+        }
+        .main-content {
+            margin-top: 80px;
+            margin-bottom: 40px;
+        }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            z-index: 10;
+        }
+        .hidden {
+            display: none;
+        }
+        .modal {
+            position: fixed;
+            top: 20%;
+            left: 20%;
+            right: 20%;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            z-index: 30;
+        }
+        @media (min-width: 768px) {
+            .sidebar {
+                left: 0;
+                position: fixed;
+                top: 80px;
+            }
+            .main-content {
+                margin-left: 250px;
+            }
+        }
+    </style>
+</head>
+<body class="flex flex-col">
+
+    <!-- Password Screen -->
+    <div id="lockScreen" class="flex items-center justify-center h-screen">
+        <div class="bg-white p-8 rounded-xl shadow-xl text-center">
+            <h1 class="text-3xl font-bold text-red-500 mb-6">🔒 Bhai ka Secure Swag</h1>
+            <input type="password" id="password" placeholder="Enter Password" class="border p-2 rounded w-full mb-4">
+            <button onclick="unlockBlog()" class="bg-red-500 text-white py-2 px-6 rounded-full hover:bg-teal-400">Unlock</button>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header id="header" class="header hidden bg-red-500 text-white p-4 text-center shadow-lg">
+        <div class="flex items-center justify-between max-w-4xl mx-auto">
+            <button id="menuBtn" class="text-3xl focus:outline-none md:hidden">☰</button>
+            <h1 class="text-2xl font-bold uppercase tracking-wide">Bhai ka Secure Swag</h1>
+            <div class="w-10"></div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div id="mainContent" class="hidden flex flex-1">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar">
+            <div class="p-6">
+                <h2 class="text-2xl font-semibold text-red-500 mb-4">Menu</h2>
+                <ul class="space-y-4 text-lg text-gray-700">
+                    <li class="hover:text-red-500 cursor-pointer transition-colors" onclick="showData()">Blog</li>
+                    <li class="hover:text-red-500 cursor-pointer transition-colors" onclick="downloadBackup()">Download Backup</li>
+                    <li class="hover:text-red-500 cursor-pointer transition-colors" onclick="document.getElementById('uploadInput').click()">Upload Backup</li>
+                </ul>
+                <input type="file" id="uploadInput" class="hidden" accept=".json" onchange="uploadBackup(event)">
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 p-6 main-content">
+            <div class="max-w-4xl mx-auto bg-white bg-opacity-90 p-8 rounded-xl shadow-xl">
+                <h2 class="text-3xl font-bold text-red-500 mb-6 text-center">📜 Bhai ka Blog</h2>
+                <textarea id="inputContent" placeholder="Naya blog ya note likh..." class="w-full p-4 border rounded mb-4" rows="4"></textarea>
+                <button onclick="addItem()" class="bg-teal-500 text-white py-2 px-6 rounded-full hover:bg-teal-600">Add Item</button>
+                <ul id="dataList" class="space-y-4 mt-4"></ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer id="footer" class="footer hidden bg-red-500 text-white p-2 text-center shadow-inner">
+        <p class="text-sm">Made with Swag by Bhai | 2025</p>
+    </footer>
+
+    <!-- Modal for Content -->
+    <div id="modal" class="hidden modal">
+        <h2 id="modalTitle" class="text-2xl font-bold text-red-500 mb-4"></h2>
+        <p id="modalContent" class="text-gray-700"></p>
+        <button onclick="closeModal()" class="mt-4 bg-red-500 text-white py-2 px-4 rounded-full hover:bg-red-600">Close</button>
+    </div>
+
+    <script>
+        const HASHED_PASSWORD = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"; // "1234" ka SHA-256 hash
+        let data = { posts: [], notes: [] };
+
+        // Load initial data from blog.json
+        fetch("blog.json")
+            .then(response => response.json())
+            .then(jsonData => {
+                data = jsonData;
+                if (!data.posts) data.posts = [];
+                if (!data.notes) data.notes = [];
+                showData();
+            })
+            .catch(() => {
+                console.log("blog.json not found, using empty data");
+                data = { posts: [], notes: [] };
+                showData();
+            });
+
+        function unlockBlog() {
+            let inputPass = document.getElementById("password").value;
+            let hashedInput = sha256(inputPass);
+            if (hashedInput === HASHED_PASSWORD) {
+                document.getElementById("lockScreen").classList.add("hidden");
+                document.getElementById("mainContent").classList.remove("hidden");
+                document.getElementById("header").classList.remove("hidden");
+                document.getElementById("footer").classList.remove("hidden");
+                document.getElementById("sidebar").classList.add("open");
+                showData();
+            } else {
+                Swal.fire({
+                    icon: "error",
+                    title: "❌ Galat Password!",
+                    text: "Swag ke bina entry nahi, bhai!",
+                    confirmButtonColor: "#ff2d55"
+                });
+            }
+        }
+
+        function showData() {
+            let dataList = document.getElementById("dataList");
+            dataList.innerHTML = "";
+
+            // Combine posts and notes into one list
+            data.posts.forEach((item, index) => {
+                let li = document.createElement("li");
+                li.className = "bg-gray-100 p-4 rounded-lg flex justify-between items-center";
+                li.innerHTML = `
+                    <span class="cursor-pointer" onclick="showModal('${item.title}', '${item.content}')">${item.title}</span>
+                    <div>
+                        <button onclick="editItem('post', ${index})" class="bg-yellow-500 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-600">Edit</button>
+                        <button onclick="deleteItem('post', ${index})" class="bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600">Delete</button>
+                    </div>
+                `;
+                dataList.appendChild(li);
+            });
+
+            data.notes.forEach((item, index) => {
+                let li = document.createElement("li");
+                li.className = "bg-gray-100 p-4 rounded-lg flex justify-between items-center";
+                li.innerHTML = `
+                    <span class="cursor-pointer" onclick="showModal('Note #${index + 1}', '${item}')">${item.substring(0, 50)}${item.length > 50 ? "..." : ""}</span>
+                    <div>
+                        <button onclick="editItem('note', ${index})" class="bg-yellow-500 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-600">Edit</button>
+                        <button onclick="deleteItem('note', ${index})" class="bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600">Delete</button>
+                    </div>
+                `;
+                dataList.appendChild(li);
+            });
+
+            document.getElementById("sidebar").classList.remove("open"); // Mobile pe sidebar band
+        }
+
+        function addItem() {
+            let content = document.getElementById("inputContent").value;
+            if (content.trim()) {
+                Swal.fire({
+                    title: "Yeh Blog hai ya Note?",
+                    showCancelButton: true,
+                    confirmButtonText: "Blog",
+                    cancelButtonText: "Note",
+                    confirmButtonColor: "#ff2d55",
+                    cancelButtonColor: "#4ecdc4"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        let title = prompt("Blog ka title kya hai, bhai?");
+                        if (title) {
+                            data.posts.push({ title: title, content: content });
+                        }
+                    } else {
+                        data.notes.push(content);
+                    }
+                    document.getElementById("inputContent").value = "";
+                    showData();
+                    Swal.fire({
+                        icon: "success",
+                        title: "Item Add Ho Gaya!",
+                        text: "Swag ke saath save, bhai!",
+                        confirmButtonColor: "#ff2d55"
+                    });
+                });
+            } else {
+                Swal.fire({
+                    icon: "warning",
+                    title: "Kuch Likh Toh!",
+                    text: "Khali swag nahi chalega, bhai!",
+                    confirmButtonColor: "#ff2d55"
+                });
+            }
+        }
+
+        function editItem(type, index) {
+            let item = type === "post" ? data.posts[index] : data.notes[index];
+            let newContent = prompt("Naya content daal, bhai:", type === "post" ? item.content : item);
+            if (newContent !== null) {
+                if (type === "post") {
+                    let newTitle = prompt("Naya title daal, bhai:", item.title);
+                    if (newTitle !== null) {
+                        data.posts[index] = { title: newTitle, content: newContent };
+                    }
+                } else {
+                    data.notes[index] = newContent;
+                }
+                showData();
+                Swal.fire({
+                    icon: "success",
+                    title: "Edit Ho Gaya!",
+                    text: "Swag update, bhai!",
+                    confirmButtonColor: "#ff2d55"
+                });
+            }
+        }
+
+        function deleteItem(type, index) {
+            Swal.fire({
+                title: "Pakka delete karna hai?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Haan, bhai!",
+                cancelButtonText: "Nahi",
+                confirmButtonColor: "#ff2d55"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    if (type === "post") {
+                        data.posts.splice(index, 1);
+                    } else {
+                        data.notes.splice(index, 1);
+                    }
+                    showData();
+                    Swal.fire({
+                        icon: "success",
+                        title: "Delete Ho Gaya!",
+                        text: "Swag saaf, bhai!",
+                        confirmButtonColor: "#ff2d55"
+                    });
+                }
+            });
+        }
+
+        function showModal(title, content) {
+            document.getElementById("modalTitle").innerHTML = title;
+            document.getElementById("modalContent").innerHTML = content;
+            document.getElementById("modal").classList.remove("hidden");
+        }
+
+        function closeModal() {
+            document.getElementById("modal").classList.add("hidden");
+        }
+
+        function downloadBackup() {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "blog.json";
+            a.click();
+            URL.revokeObjectURL(url);
+            Swal.fire({
+                icon: "success",
+                title: "Backup Done!",
+                text: "Apna swag blog.json mein save ho gaya, bhai!",
+                confirmButtonColor: "#ff2d55"
+            });
+        }
+
+        function uploadBackup(event) {
+            const file = event.target.files[0];
+            if (file && file.name.endsWith(".json")) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const jsonData = JSON.parse(e.target.result);
+                    data = jsonData;
+                    if (!data.posts) data.posts = [];
+                    if (!data.notes) data.notes = [];
+                    showData();
+                    Swal.fire({
+                        icon: "success",
+                        title: "Backup Uploaded!",
+                        text: "Swag wapas aa gaya, bhai!",
+                        confirmButtonColor: "#ff2d55"
+                    });
+                };
+                reader.readAsText(file);
+            } else {
+                Swal.fire({
+                    icon: "error",
+                    title: "Galat File!",
+                    text: "Sirf blog.json chahiye, bhai!",
+                    confirmButtonColor: "#ff2d55"
+                });
+            }
+        }
+
+        // Sidebar Toggle for Mobile
+        document.getElementById("menuBtn").addEventListener("click", () => {
+            document.getElementById("sidebar").classList.toggle("open");
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+    "posts": [
+        {
+            "title": "Bhai ka Pehla Blog",
+            "content": "Yeh mera pehla blog hai – swag ke saath shuruat!"
+        },
+        {
+            "title": "Swag King",
+            "content": "Dunia pe swag ka raaj chalega!"
+        }
+    ],
+    "notes": [
+        "Yeh mera pehla note hai – swag on!",
+        "Kal ka plan: Swag badhao!"
+    ]
+}
